@@ -13,7 +13,7 @@
  *                                                        *
  * hprose writer unit for cpp.                            *
  *                                                        *
- * LastModified: Jun 15, 2014                             *
+ * LastModified: Apr 27, 2015                             *
  * Author: Chen fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -33,14 +33,7 @@
 
 namespace hprose {
 
-using ::std::is_signed;
-
 class HproseWriter {
-public:
-
-    typedef std::true_type SignedType;
-    typedef std::false_type UnignedType;
-
 public:
 
     HproseWriter(std::ostream & stream, bool simple = false)
@@ -92,7 +85,7 @@ public:
             (NonCVType<ValueType>::value == ByteType::value) ||
             (NonCVType<ValueType>::value == CharType::value) ||
             (NonCVType<ValueType>::value == IntegerType::value), "Require [ByteType, CharType, IntegerType]");
-        WriteInteger(i, is_signed<ValueType>());
+        WriteInteger(i, std::is_signed<ValueType>());
     }
 
     template<typename ValueType>
@@ -102,7 +95,7 @@ public:
             (NonCVType<ValueType>::value == CharType::value) ||
             (NonCVType<ValueType>::value == IntegerType::value) ||
             (NonCVType<ValueType>::value == LongType::value), "Require [ByteType, CharType, IntegerType, LongType]");
-        WriteLong(l, is_signed<ValueType>());
+        WriteLong(l, std::is_signed<ValueType>());
     }
 
     inline void WriteNaN() {
@@ -134,7 +127,7 @@ public:
         size_t n = b.size();
         if (WriteRef(&b, checkRef)) {
             stream << HproseTags::TagBytes;
-            if (n > 0) WriteInt(n, stream);
+            if (n > 0) WriteIntFast(n, stream);
             stream << HproseTags::TagQuote;
 #ifdef _MSC_VER
             stream.write(reinterpret_cast<const char *>(b.data()), n);
@@ -192,7 +185,7 @@ public:
             references.push_back(Any());
         }
         stream << HproseTags::TagBytes;
-        if (n > 0) WriteInt(n, stream);
+        if (n > 0) WriteIntFast(n, stream);
         stream << HproseTags::TagQuote;
         stream.write(reinterpret_cast<const char *>(b), n);
         stream << HproseTags::TagQuote;
@@ -220,7 +213,7 @@ public:
             stream << HproseTags::TagUTF8Char;
             stream.write(buf, len);
         } else {
-            WriteInteger(c);
+            HPROSE_THROW_EXCEPTION("Malformed UTF-8 char");
         }
     }
 
@@ -303,7 +296,7 @@ public:
         if (n > 0) {
             if (WriteRef(&a, checkRef)) {
                 stream << HproseTags::TagList;
-                WriteInt(n, stream);
+                WriteIntFast(n, stream);
                 stream << HproseTags::TagOpenbrace;
                 for (BOOST_DEDUCED_TYPENAME ValueType::const_iterator itr = a.begin(); itr != a.end(); ++itr) {
                     Serialize(*itr);
@@ -365,7 +358,7 @@ public:
     void WriteList(const std::bitset<Bits> & b, bool checkRef = true) {
         if (Bits > 0) {
             stream << HproseTags::TagList;
-            WriteInt(Bits, stream);
+            WriteIntFast(Bits, stream);
             stream << HproseTags::TagOpenbrace;
             for (size_t i = 0; i < Bits; i++) {
                 Serialize(b[i]);
@@ -383,7 +376,7 @@ public:
         }
         if (n > 0) {
             stream << HproseTags::TagList;
-            WriteInt(n, stream);
+            WriteIntFast(n, stream);
             stream << HproseTags::TagOpenbrace;
             for (size_t i = 0; i < n; i++) {
                 Serialize(a[i]);
@@ -415,7 +408,7 @@ public:
         if (n > 0) {
             if (WriteRef(&m, checkRef)) {
                 stream << HproseTags::TagMap;
-                WriteInt(n, stream);
+                WriteIntFast(n, stream);
                 stream << HproseTags::TagOpenbrace;
                 for (BOOST_DEDUCED_TYPENAME ValueType::const_iterator itr = m.begin(); itr != m.end(); ++itr) {
                     Serialize(itr->first);
@@ -440,7 +433,7 @@ public:
                 cr = WriteClass(o);
             }
             stream << HproseTags::TagObject;
-            WriteInt((int)cr, stream);
+            WriteIntFast((int)cr, stream);
             stream << HproseTags::TagOpenbrace;
             ClassManager::ClassProperty * m = ClassManager::SharedInstance()->GetClassProperty(type);
             if (m) {
@@ -623,7 +616,7 @@ private:
     template<typename ValueType>
     inline void WriteInteger(ValueType i, const SignedType & s) {
         if (i >= 0 && i <= 9) {
-            stream << (char)('0' + i);
+            stream << static_cast<char>('0' + i);
         } else {
             stream << HproseTags::TagInteger;
             WriteIntFast(i, stream, s);
@@ -634,7 +627,7 @@ private:
     template<typename ValueType>
     inline void WriteInteger(ValueType i, const UnignedType & u) {
         if (i <= 9) {
-            stream << (char)('0' + i);
+            stream << static_cast<char>('0' + i);
         } else {
             stream << HproseTags::TagInteger;
             WriteIntFast(i, stream, u);
@@ -645,7 +638,7 @@ private:
     template<typename ValueType>
     inline void WriteLong(ValueType l, const SignedType & s) {
         if (l >= 0 && l <= 9) {
-            stream << (char)('0' + l);
+            stream << static_cast<char>('0' + l);
         } else {
             stream << HproseTags::TagLong;
             WriteIntFast(l, stream, s);
@@ -656,7 +649,7 @@ private:
     template<typename ValueType>
     inline void WriteLong(ValueType l, const UnignedType & u) {
         if (l <= 9) {
-            stream << (char)('0' + l);
+            stream << static_cast<char>('0' + l);
         } else {
             stream << HproseTags::TagLong;
             WriteIntFast(l, stream, u);
@@ -684,35 +677,35 @@ private:
 
     void WriteDate(int year, int month, int day) {
         stream << HproseTags::TagDate;
-        stream << (char)('0' + (year / 1000 % 10));
-        stream << (char)('0' + (year / 100 % 10));
-        stream << (char)('0' + (year / 10 % 10));
-        stream << (char)('0' + (year % 10));
-        stream << (char)('0' + (month / 10 % 10));
-        stream << (char)('0' + (month % 10));
-        stream << (char)('0' + (day / 10 % 10));
-        stream << (char)('0' + (day % 10));
+        stream << static_cast<char>('0' + (year / 1000 % 10));
+        stream << static_cast<char>('0' + (year / 100 % 10));
+        stream << static_cast<char>('0' + (year / 10 % 10));
+        stream << static_cast<char>('0' + (year % 10));
+        stream << static_cast<char>('0' + (month / 10 % 10));
+        stream << static_cast<char>('0' + (month % 10));
+        stream << static_cast<char>('0' + (day / 10 % 10));
+        stream << static_cast<char>('0' + (day % 10));
     }
 
     void WriteTime(int hour, int minute, int second, int milliseconds = 0) {
         stream << HproseTags::TagTime;
-        stream << (char)('0' + (hour / 10 % 10));
-        stream << (char)('0' + (hour % 10));
-        stream << (char)('0' + (minute / 10 % 10));
-        stream << (char)('0' + (minute % 10));
-        stream << (char)('0' + (second / 10 % 10));
-        stream << (char)('0' + (second % 10));
+        stream << static_cast<char>('0' + (hour / 10 % 10));
+        stream << static_cast<char>('0' + (hour % 10));
+        stream << static_cast<char>('0' + (minute / 10 % 10));
+        stream << static_cast<char>('0' + (minute % 10));
+        stream << static_cast<char>('0' + (second / 10 % 10));
+        stream << static_cast<char>('0' + (second % 10));
         if (milliseconds > 0) {
             stream << HproseTags::TagPoint;
-            stream << (char)('0' + (milliseconds / 100 % 10));
-            stream << (char)('0' + (milliseconds / 10 % 10));
-            stream << (char)('0' + (milliseconds % 10));
+            stream << static_cast<char>('0' + (milliseconds / 100 % 10));
+            stream << static_cast<char>('0' + (milliseconds / 10 % 10));
+            stream << static_cast<char>('0' + (milliseconds % 10));
         }
     }
 
     inline void WriteUTF8String(const std::string & s, size_t len, std::ostream & os) {
         if (len) {
-            WriteInt(len, os);
+            WriteIntFast(len, os);
         }
         os << HproseTags::TagQuote << s << HproseTags::TagQuote;
     }
@@ -740,7 +733,7 @@ private:
                 ClassManager::ClassProperty * m = ClassManager::SharedInstance()->GetClassProperty(alias);
                 if (m) {
                     size_t n = m->size();
-                    if (n > 0) WriteInt(n, os);
+                    if (n > 0) WriteIntFast(n, os);
                 }
                 os << HproseTags::TagOpenbrace;
                 if (m) {
@@ -778,62 +771,8 @@ private:
 
     inline void WriteRef(int ref) {
         stream << HproseTags::TagRef;
-        WriteInt(ref, stream);
+        WriteIntFast(ref, stream);
         stream << HproseTags::TagSemicolon;
-    }
-
-private:
-
-    template<typename ValueType>
-    inline void WriteInt(ValueType i, std::ostream & os, const SignedType & s) {
-        if (i >= 0 && i <= 9) {
-            os << (char)('0' + i);
-        } else {
-            WriteIntFast(i, os, s);
-        }
-    }
-
-    template<typename ValueType>
-    inline void WriteInt(ValueType i, std::ostream & os, const UnignedType & u) {
-        if (i <= 9) {
-            os << (char)('0' + i);
-        } else {
-            WriteIntFast(i, os,  u);
-        }
-    }
-
-    template<typename ValueType>
-    inline void WriteInt(ValueType i, std::ostream & os) {
-        WriteInt(i, os, is_signed<ValueType>());
-    }
-
-    template<typename ValueType>
-    void WriteIntFast(ValueType i, std::ostream & os, const SignedType &) {
-        int off = 20;
-        int len = 0;
-        bool neg = i < 0;
-        while (i != 0) {
-            buf[--off] = (char)labs(i % 10) + '0';
-            ++len;
-            i /= 10;
-        }
-        if (neg) {
-            buf[--off] = '-';
-            ++len;
-        }
-        os.write(&buf[off], len);
-    }
-
-    template<typename ValueType>
-    void WriteIntFast(ValueType i, std::ostream & os, const UnignedType &) {
-        int off = 20;
-        int len = 0;
-        while (i != 0) {
-            buf[--off] = i % 10 + '0';
-            ++len;
-            i /= 10;
-        }
-        os.write(&buf[off], len);
     }
 
 private:
