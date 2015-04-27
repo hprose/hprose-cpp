@@ -13,7 +13,7 @@
  *                                                        *
  * hprose common unit for cpp.                            *
  *                                                        *
- * LastModified: Apr 27, 2015                             *
+ * LastModified: Jun 15, 2014                             *
  * Author: Chen fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -26,7 +26,6 @@
 #endif
 
 #include <hprose/common/Any.hpp>
-#include <hprose/common/IntUtil.hpp>
 #include <hprose/common/UTF8Util.hpp>
 
 #endif // HPROSE_COMMON_HPP

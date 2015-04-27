@@ -13,7 +13,7 @@
  *                                                        *
  * hprose reader unit for cpp.                            *
  *                                                        *
- * LastModified: Apr 27, 2015                             *
+ * LastModified: Jul 6, 2014                              *
  * Author: Chen fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -314,7 +314,7 @@ public:
         switch (char tag = stream.get()) {
             case HproseTags::TagNull: return ReturnType();
             case HproseTags::TagList: return ReadListWithoutTag<ReturnType>();
-//            case HproseTags.TagRef: return (List<ReturnType>)ReadRef();
+//            case HproseTags.TagRef: return (List<T>)ReadRef();
             default: HPROSE_THROW_EXCEPTION(CastError<ReturnType>(tag));
         }
     }
@@ -849,7 +849,7 @@ private:
             t.tm_hour = 0;
             t.tm_min = 0;
             if (tag == HproseTags::TagUTC) {
-                t.tm_sec = static_cast<int>(-CTime::TimeZone());
+                t.tm_sec = -CTime::TimeZone();
             } else {
                 t.tm_sec = 0;
             }
