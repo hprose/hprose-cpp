@@ -218,7 +218,7 @@ public:
     }
 
     inline void WriteUTF8Char(const char & c) {
-#ifdef BOOST_WINDOWS
+#if defined(BOOST_WINDOWS) && (!defined(HPROSE_CHARSET_UTF8))
         WriteUTF8Char(AnsiToUnicode(c));
 #else
         if (is_ascii(c)) {
@@ -244,7 +244,7 @@ public:
     }
 
     inline void WriteString(const std::string & s, bool checkRef = true) {
-#ifdef BOOST_WINDOWS
+#if defined(BOOST_WINDOWS) && (!defined(HPROSE_CHARSET_UTF8))
         WriteString(AnsiToUnicode(s), checkRef);
 #else
         size_t len = UTF8Length(s.begin(), s.end(), Char16Type());
@@ -711,7 +711,7 @@ private:
     }
 
     inline void WriteUTF8String(const std::string & s, std::ostream & os) {
-#ifdef BOOST_WINDOWS
+#if defined(BOOST_WINDOWS) && (!defined(HPROSE_CHARSET_UTF8))
         std::wstring w = AnsiToUnicode(s);
         WriteUTF8String(UTF8Encode(w), w.size(), os);
 #else

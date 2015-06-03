@@ -678,7 +678,7 @@ private:
 
     template<typename ReturnType>
     ReturnType ReadCharsAsString(const std::basic_string<char_type> & chars, Char8Type) {
-#ifdef BOOST_WINDOWS
+#if defined(BOOST_WINDOWS) && (!defined(HPROSE_CHARSET_UTF8))
         return UnicodeToAnsi(chars);
 #else
         std::string s;
@@ -884,7 +884,7 @@ private:
     template<typename ReturnType>
     ReturnType ReadUTF8CharWithoutTag(Char8Type) {
         char_type c = ReadUTF8CharAsChar();
-#ifdef BOOST_WINDOWS
+#if defined(BOOST_WINDOWS) && (!defined(HPROSE_CHARSET_UTF8))
         return UnicodeToAnsi(std::wstring(1, c));
 #else
         std::string s;
