@@ -5,31 +5,39 @@
 using namespace std;
 using namespace hprose;
 
-HproseHTTPClient client1("http://www.hprose.com/example/");
+HproseHTTPClient client("http://www.hprose.com/example/");
 
-void callback(string result, string (&args)[1]) {
-    cout << result << endl;
+boost::shared_mutex print_mutex;
+
+void println(string msg) {
+    boost::unique_lock<boost::shared_mutex> lock(print_mutex);
+    cout << msg << endl;
+}
+
+void callback(string result, vector<string> args) {
+    println(result);
 }
 
 struct handler {
-    void operator()(string result, string (&args)[1]) {
-        cout << result << endl;
+    void operator()(string result, vector<string> args) {
+        println(result);
     }
 };
 
 void hello1() {
     string args[] = {"world"};
-    cout << client1.Invoke<string>("hello", args) << endl;
+    cout << client.Invoke<string>("hello", args) << endl;
 }
 
 void hello2() {
     string args[] = {"asynchronous world 2"};
-    client1.AsyncInvoke<string>("hello", args, callback);
+    client.AsyncInvoke<string>("hello", args, callback);
 }
 
 void hello3() {
-    string args[] = {"asynchronous world 3"};
-    client1.AsyncInvoke<string>("hello", args, handler());
+    vector<string> args;
+    args.push_back("asynchronous world 3");
+    client.AsyncInvoke<string>("hello", args, handler());
 }
 
 int main() {
