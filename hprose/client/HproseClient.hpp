@@ -123,8 +123,17 @@ public:
     }
 
     template<typename ReturnType, typename ArgsType, typename Functor>
-    inline void AsyncInvoke(const std::string & name, ArgsType & args, Functor func, bool ref = false) {
+    inline void AsyncInvoke(const std::string & name, const ArgsType & args, Functor func, bool ref = false) {
         boost::thread thread(Async<ReturnType, ArgsType, Functor>(*this, name, args, func, ref));
+    }
+    
+    template<typename ReturnType, typename ArgsType, typename Functor, size_t ArraySize>
+    inline void AsyncInvoke(const std::string & name, const ArgsType (&args)[ArraySize], Functor func, bool ref = false) {
+        std::vector<ArgsType> newArgs(ArraySize);
+        for (int i = 0; i < ArraySize; ++i) {
+            newArgs[i] = args[i];
+        }
+        AsyncInvoke<ReturnType>(name, newArgs, func, ref);
     }
 
 private:
@@ -133,7 +142,7 @@ private:
     class Async {
     public:
 
-        Async(HproseClient & client, const std::string & name, ArgsType & args, Functor func, bool ref)
+        Async(HproseClient & client, const std::string & name, ArgsType args, Functor func, bool ref)
             : client(client), name(name), args(args), func(func), ref(ref) {
         }
 
@@ -149,7 +158,7 @@ private:
 
         HproseClient & client;
         std::string name;
-        ArgsType & args;
+        ArgsType args;
         Functor func;
         bool ref;
 
