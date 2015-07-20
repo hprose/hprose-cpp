@@ -13,7 +13,7 @@
  *                                                        *
  * hprose reader unit for cpp.                            *
  *                                                        *
- * LastModified: Apr 27, 2015                             *
+ * LastModified: Jul 20, 2015                             *
  * Author: Chen fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -629,7 +629,7 @@ private:
         int count = ReadInt(HproseTags::TagQuote);
         buf.resize(count);
         for (int i = 0; i < count; i++) {
-            char c = stream.get();
+            int c = stream.get();
             switch (c >> 4) {
                 case 0:
                 case 1:
@@ -700,7 +700,7 @@ private:
 
     std::string ReadUTF8CharAsUTF8String() {
         std::string s;
-        char c = stream.get();
+        int c = stream.get();
         switch (c >> 4) {
             case 0:
             case 1:
@@ -739,7 +739,7 @@ private:
         std::string s;
         s.reserve(count * 3);
         for (int i = 0; i < count; i++) {
-            char c = stream.get();
+            int c = stream.get();
             switch (c >> 4) {
                 case 0:
                 case 1:
