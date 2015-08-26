@@ -77,108 +77,6 @@ const char TimeZoneNames[26][6][5] = {
     { "NZDT" } // 13
 };
 
-bool parseMonth(const std::string & value, int & month) {
-    for (int i = 0; i < 12; i++) {
-        if (MonthNames[i] == value) {
-            month = i;
-            return true;
-        }
-    }
-    return false;
-}
-
-bool parseTimezone(const std::string & value, long & zone) {
-    if ((value[0] == '+') || (value[0] == '-')) {
-        if (value == "-0000") {
-            zone = CTime::TimeZone();
-        } else if (value.size() > 4) {
-            int zh = atoi(value.substr(1, 2).c_str());
-            int zm = atoi(value.substr(3, 2).c_str());
-            zone = zh * 3600 + zm * 60;
-            if (value[0] == '-') {
-                zone = zone * (-1);
-            }
-        }
-        return true;
-    } else {
-        for (int i = 0; i < 26; i++) {
-            for (int j = 0; j < TimeZoneCount[i]; j++) {
-                if (TimeZoneNames[i][j] == value) {
-                    zone = (i - 12) * 3600;
-                    return true;
-                }
-            }
-        }
-    }
-    return false;
-}
-
-std::time_t parseRFCDatetime(std::string value) {
-    boost::replace_all(value, " -", " #");
-    std::replace(value.begin(), value.end(), '-', ' ');
-    boost::replace_all(value, " #", " -");
-    std::tm t;
-    memset(&t, 0, sizeof(std::tm));
-    int x;
-    long zone = 0;
-    std::string s;
-    std::string::size_type pos;
-    while (!value.empty()) {
-        pos = value.find(' ');
-        if (pos != std::string::npos) {
-            s = value.substr(0, pos);
-            value.erase(0, pos + 1);
-        } else {
-            s = value;
-            value.clear();
-        }
-        std::transform(s.begin(), s.end(), s.begin(), toupper);
-        if (parseTimezone(s, zone)) continue;
-        if ((x = atoi(s.c_str())) > 0) {
-            if ((x < 32) && (!t.tm_mday)) {
-                t.tm_mday = x;
-                continue;
-            } else {
-                if ((!t.tm_year) && (t.tm_mon || (x > 12))) {
-                    if (x < 32) {
-                        t.tm_year = x + 100;
-                    } else if (x < 1000) {
-                        t.tm_year = x;
-                    } else {
-                        t.tm_year = x - 1900;
-                    }
-                    continue;
-                }
-            }
-        }
-        std::string::size_type first, last;
-        if ((first = s.find_first_of(':')) < (last = s.find_last_of(':'))) {
-            t.tm_hour = atoi(s.substr(0, first).c_str());
-            t.tm_min = atoi(s.substr(first + 1, last).c_str());
-            t.tm_sec = atoi(s.substr(last + 1).c_str());
-            continue;
-        }
-        if (s == "DST") {
-            t.tm_isdst = true;
-            continue;
-        }
-        if (parseMonth(s, x) && (!t.tm_mon)) {
-            t.tm_mon = x;
-        }
-    }
-    if (!t.tm_year) {
-        t.tm_year = 80;
-    }
-    if (t.tm_mon > 11) {
-        t.tm_mon = 11;
-    }
-    if (!t.tm_mday) {
-        t.tm_mday = 1;
-    }
-    t.tm_sec -= (zone + CTime::TimeZone());
-    return mktime(&t);
-}
-
 struct cookie {
     cookie()
         : expiry(0), secure(false) {
@@ -309,6 +207,109 @@ public:
             }
         }
     };
+
+private:
+    bool parseMonth(const std::string & value, int & month) {
+        for (int i = 0; i < 12; i++) {
+            if (MonthNames[i] == value) {
+                month = i;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool parseTimezone(const std::string & value, long & zone) {
+        if ((value[0] == '+') || (value[0] == '-')) {
+            if (value == "-0000") {
+                zone = CTime::TimeZone();
+            } else if (value.size() > 4) {
+                int zh = atoi(value.substr(1, 2).c_str());
+                int zm = atoi(value.substr(3, 2).c_str());
+                zone = zh * 3600 + zm * 60;
+                if (value[0] == '-') {
+                    zone = zone * (-1);
+                }
+            }
+            return true;
+        } else {
+            for (int i = 0; i < 26; i++) {
+                for (int j = 0; j < TimeZoneCount[i]; j++) {
+                    if (TimeZoneNames[i][j] == value) {
+                        zone = (i - 12) * 3600;
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    std::time_t parseRFCDatetime(std::string value) {
+        boost::replace_all(value, " -", " #");
+        std::replace(value.begin(), value.end(), '-', ' ');
+        boost::replace_all(value, " #", " -");
+        std::tm t;
+        memset(&t, 0, sizeof(std::tm));
+        int x;
+        long zone = 0;
+        std::string s;
+        std::string::size_type pos;
+        while (!value.empty()) {
+            pos = value.find(' ');
+            if (pos != std::string::npos) {
+                s = value.substr(0, pos);
+                value.erase(0, pos + 1);
+            } else {
+                s = value;
+                value.clear();
+            }
+            std::transform(s.begin(), s.end(), s.begin(), toupper);
+            if (parseTimezone(s, zone)) continue;
+            if ((x = atoi(s.c_str())) > 0) {
+                if ((x < 32) && (!t.tm_mday)) {
+                    t.tm_mday = x;
+                    continue;
+                } else {
+                    if ((!t.tm_year) && (t.tm_mon || (x > 12))) {
+                        if (x < 32) {
+                            t.tm_year = x + 100;
+                        } else if (x < 1000) {
+                            t.tm_year = x;
+                        } else {
+                            t.tm_year = x - 1900;
+                        }
+                        continue;
+                    }
+                }
+            }
+            std::string::size_type first, last;
+            if ((first = s.find_first_of(':')) < (last = s.find_last_of(':'))) {
+                t.tm_hour = atoi(s.substr(0, first).c_str());
+                t.tm_min = atoi(s.substr(first + 1, last).c_str());
+                t.tm_sec = atoi(s.substr(last + 1).c_str());
+                continue;
+            }
+            if (s == "DST") {
+                t.tm_isdst = true;
+                continue;
+            }
+            if (parseMonth(s, x) && (!t.tm_mon)) {
+                t.tm_mon = x;
+            }
+        }
+        if (!t.tm_year) {
+            t.tm_year = 80;
+        }
+        if (t.tm_mon > 11) {
+            t.tm_mon = 11;
+        }
+        if (!t.tm_mday) {
+            t.tm_mday = 1;
+        }
+        t.tm_sec -= (zone + CTime::TimeZone());
+        return mktime(&t);
+    }
 
 private:
 
