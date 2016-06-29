@@ -13,7 +13,7 @@
  *                                                        *
  * hprose any unit for cpp.                               *
  *                                                        *
- * LastModified: Jun 15, 2014                             *
+ * LastModified: Jun 29, 2016                             *
  * Author: Chen fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -46,6 +46,16 @@ struct is_const
 template<typename ValueType>
 struct is_const<ValueType *>
   : public is_const<ValueType> {
+};
+
+template<typename MemberType>
+struct remove_member_pointer {
+    typedef MemberType type;
+};
+
+template<typename MemberType, typename ClassType>
+struct remove_member_pointer<MemberType ClassType::*> {
+    typedef MemberType type;
 };
 
 template<typename Reader, typename Writer>
@@ -217,7 +227,7 @@ private: // types
 
         inline void Unserialize(Reader & r, void * o, const std::true_type &) {
             ClassType * p = static_cast<ClassType *>(o);
-            r.Unserialize(p->*held);
+            p->*held = r.template Unserialize<typename remove_member_pointer<ValueType>::type >();
         }
 
         inline void Unserialize(Reader & w, void * o, const std::false_type &) {
