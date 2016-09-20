@@ -13,7 +13,7 @@
  *                                                        *
  * hprose reader unit for cpp.                            *
  *                                                        *
- * LastModified: Jul 20, 2015                             *
+ * LastModified: Sep 20, 2016                             *
  * Author: Chen fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -54,7 +54,7 @@ public:
 public:
 
     bool ReadBool() {
-        switch (char tag = stream.get()) {
+        switch (int tag = stream.get()) {
             case '0': return false;
             case '1':
             case '2':
@@ -84,7 +84,7 @@ public:
     template<typename ReturnType>
     ReturnType ReadChar() {
         HPROSE_STATIC_ASSERT(NonCVType<ReturnType>::value == CharType::value, "Require CharType");
-        switch (char tag = stream.get()) {
+        switch (int tag = stream.get()) {
             case '0':
             case '1':
             case '2':
@@ -112,7 +112,7 @@ public:
 
     template<typename ReturnType>
     ReturnType ReadInt() {
-        switch (char tag = stream.get()) {
+        switch (int tag = stream.get()) {
             case '0': return 0;
             case '1': return 1;
             case '2': return 2;
@@ -149,7 +149,7 @@ public:
 
     template<typename ReturnType>
     ReturnType ReadDouble() {
-        switch (char tag = stream.get()) {
+        switch (int tag = stream.get()) {
             case '0': return 0;
             case '1': return 1;
             case '2': return 2;
@@ -181,7 +181,7 @@ public:
     }
 
     time_t ReadDateTime() {
-        switch (char tag = stream.get()) {
+        switch (int tag = stream.get()) {
             case '0': return 0;
             case '1': return 1;
             case '2': return 2;
@@ -207,7 +207,7 @@ public:
     template<typename ReturnType>
     ReturnType ReadBytes() {
         typedef BOOST_DEDUCED_TYPENAME NonCVElementType<ReturnType>::type element;
-        switch (char tag = stream.get()) {
+        switch (int tag = stream.get()) {
             case HproseTags::TagNull:
             case HproseTags::TagEmpty: return ReturnType();
             case HproseTags::TagUTF8Char: {
@@ -252,7 +252,7 @@ public:
 
     template<typename ReturnType>
     ReturnType ReadString() {
-        switch (char tag = stream.get()) {
+        switch (int tag = stream.get()) {
             case '0': return Stringify<ReturnType>("0");
             case '1': return Stringify<ReturnType>("1");
             case '2': return Stringify<ReturnType>("2");
@@ -311,7 +311,7 @@ public:
 
     template<typename ReturnType>
     ReturnType ReadList() {
-        switch (char tag = stream.get()) {
+        switch (int tag = stream.get()) {
             case HproseTags::TagNull: return ReturnType();
             case HproseTags::TagList: return ReadListWithoutTag<ReturnType>();
 //            case HproseTags.TagRef: return (List<ReturnType>)ReadRef();
@@ -321,7 +321,7 @@ public:
 
     template<typename ReturnType>
     ReturnType ReadMap() {
-        switch (char tag = stream.get()) {
+        switch (int tag = stream.get()) {
             case HproseTags::TagNull: return ReturnType();
            // case HproseTags::TagList: return ReadListAsMap();
             case HproseTags::TagMap: return ReadMapWithoutTag<ReturnType>();
@@ -334,11 +334,11 @@ public:
 
     template<typename ReturnType>
     ReturnType ReadObject() {
-        switch (char tag = stream.get()) {
+        switch (int tag = stream.get()) {
 //        case HproseTags::TagNull: return null;
 //        case HproseTags::TagMap: return readMapAsObject(type);
-//        case HproseTags::TagClass: readClass(); return readObject(type);
-//        case HproseTags::TagObject: return readObjectWithoutTag(type);
+        case HproseTags::TagClass: ReadClass(); return ReadObject<ReturnType>();
+        case HproseTags::TagObject: return ReadObjectWithoutTag<ReturnType>();
 //        case HproseTags::TagRef: return readRef(type);
         default: HPROSE_THROW_EXCEPTION(CastError<ReturnType>(tag));
         }
@@ -395,7 +395,7 @@ private:
 
     template<typename ReturnType>
     ReturnType Unserialize(AnyType) {
-        switch (char tag = stream.get()) {
+        switch (int tag = stream.get()) {
             case '0': return 0;
             case '1': return 1;
             case '2': return 2;
@@ -987,12 +987,12 @@ private:
     }
 
     void ReadClass() {
-        std::string name = ReadString();
+        std::string name = ReadStringWithoutTag();
         int count = ReadInt(HproseTags::TagOpenbrace);
         std::vector<std::string> attrs;
         attrs.reserve(count);
         for (int i = 0; i < count; i++) {
-            attrs.push_back(ReadStringWithoutTag());
+            attrs.push_back(ReadString());
         }
         CheckTag(HproseTags::TagClosebrace);
         const std::type_info * type = ClassManager::SharedInstance()->GetClass(name);
@@ -1004,17 +1004,18 @@ private:
 
     template<typename ReturnType>
     ReturnType ReadObjectWithoutTag() {
-//        const std::type_info * type = classRef[ReadInt(HproseTags::TagOpenbrace)];
-//        std::vector<std::string> & attrs = attrsRef[type];
-//        std::string alias = ClassManager::SharedInstance()->GetClassAlias(type);
-//        ClassManager::ClassProperty * m  = ClassManager::SharedInstance()->GetClassProperty(alias);
-//        references.push_back(&o);
-//        for (size_t i = 0; i < attrs.size(); i++) {
-//            (*m)[attrs[i]].Unserialize(*this, o);
-//        }
-//        CheckTag(HproseTags::TagClosebrace);
+        const std::type_info * type = classRef[ReadInt(HproseTags::TagOpenbrace)];
+        std::vector<std::string> & attrs = attrsRef[type];
+        std::string alias = ClassManager::SharedInstance()->GetClassAlias(type);
+        ClassManager::ClassProperty * m  = ClassManager::SharedInstance()->GetClassProperty(alias);
+        ReturnType o;
+        references.push_back(&o);
+        for (size_t i = 0; i < attrs.size(); i++) {
+            (*m)[attrs[i]].Unserialize(*this, o);
+        }
+        CheckTag(HproseTags::TagClosebrace);
+        return o;
     }
-
 
     template<typename ReturnType>
     ReturnType ReadRef() {

@@ -13,7 +13,7 @@
  *                                                        *
  * hprose any unit for cpp.                               *
  *                                                        *
- * LastModified: Jun 29, 2016                             *
+ * LastModified: Sep 20, 2016                             *
  * Author: Chen fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -127,7 +127,7 @@ public: // Serialize
         if (content) {
             content->Unserialize(r, &object);
         } else {
-            r.Unserialize(*this);
+//            r.Unserialize(*this);
         }
     }
 
