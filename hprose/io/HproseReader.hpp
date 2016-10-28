@@ -13,7 +13,7 @@
  *                                                        *
  * hprose reader unit for cpp.                            *
  *                                                        *
- * LastModified: Sep 20, 2016                             *
+ * LastModified: Oct 28, 2016                             *
  * Author: Chen fei <cf@hprose.com>                       *
  *                                                        *
 \**********************************************************/
@@ -863,7 +863,7 @@ private:
         tm t;
         t.tm_year = 70; // 1970 - 1900
         t.tm_mon = 0;
-        t.tm_mday = 0;
+        t.tm_mday = 1;
         t.tm_isdst = -1;
         ReadTime(&t);
         time_t result = mktime(&t);
