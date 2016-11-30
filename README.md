@@ -29,3 +29,23 @@ It is a modern, lightweight, cross-language, cross-platform, object-oriented, hi
 Through *Hprose*, You can conveniently and efficiently intercommunicate between those programming languages.
 
 This project is the implementation of Hprose for C++.
+
+
+Tips:
+1.cpp版依赖Boost，需要额外编译
+
+2.boost编译，安装
+  官方 windows/unix-variants 安装文档
+  - C:\boost_1_62_0\more\getting_started\windows.html
+  - C:\boost_1_62_0\more\getting_started\unix-variants.html
+  
+3.需要加上宏，
+
+* #define HPROSE_CHARSET_UTF8  //字符用UTF8编码
+* #define HPROSE_NO_OPENSSL    //取消OpenSSL依赖（这样不用ASIO不用依赖OpenSSL）,  当然将来server端想用OpenSSL的话，可以自己编译进去
+
+
+================
+另外发展问题，将来cpp版本不会再打算维护，
+
+将来社区重心会放在[Hprose-cpp1x](https://github.com/hprose/hprose-cpp1x)
