@@ -888,8 +888,8 @@ private:
         return UnicodeToAnsi(std::wstring(1, c));
 #else
         std::string s;
-        s.resize(UTF8Size(&c, &c, Char16Type()));
-        UTF8Encode(&c, &c, s.begin(), Char16Type());
+        s.resize(UTF8Size(&c, &c + 1, Char16Type()));
+        UTF8Encode(&c, &c + 1, s.begin(), Char16Type());
         return s;
 #endif
     }
