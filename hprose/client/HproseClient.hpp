@@ -191,7 +191,9 @@ private:
         HproseWriter writer(stream);
         stream << HproseTags::TagCall;
         writer.WriteString(name, false);
-        writer.WriteList(args, false);
+        if (!args.empty()) {
+            writer.WriteList(args, false);
+        }
         if (ref) {
             writer.WriteBool(true);
         }
@@ -202,10 +204,10 @@ private:
     void DoOutput(const std::string & name, ArgsType (&args)[ArraySize], bool ref, std::ostream & stream) {
         HproseWriter writer(stream);
         stream << HproseTags::TagCall;
+        writer.WriteString(name, false);
         if (!args.empty()) {
-            writer.WriteString(name, false);
+            writer.WriteList(args, false);
         }
-        writer.WriteList(args, false);
         if (ref) {
             writer.WriteBool(true);
         }
