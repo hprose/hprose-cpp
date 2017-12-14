@@ -191,7 +191,9 @@ private:
         HproseWriter writer(stream);
         stream << HproseTags::TagCall;
         writer.WriteString(name, false);
-        writer.WriteList(args, false);
+        if (!args.empty()) {
+            writer.WriteList(args, false);
+        }
         if (ref) {
             writer.WriteBool(true);
         }
@@ -203,7 +205,9 @@ private:
         HproseWriter writer(stream);
         stream << HproseTags::TagCall;
         writer.WriteString(name, false);
-        writer.WriteList(args, false);
+        if (!args.empty()) {
+            writer.WriteList(args, false);
+        }
         if (ref) {
             writer.WriteBool(true);
         }
