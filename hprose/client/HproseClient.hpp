@@ -193,10 +193,11 @@ private:
         writer.WriteString(name, false);
         if (!args.empty()) {
             writer.WriteList(args, false);
+            if (ref) {
+                writer.WriteBool(true);
+            }
         }
-        if (ref) {
-            writer.WriteBool(true);
-        }
+
         stream << HproseTags::TagEnd;
     }
 
@@ -207,10 +208,11 @@ private:
         writer.WriteString(name, false);
         if (!args.empty()) {
             writer.WriteList(args, false);
+            if (ref) {
+                writer.WriteBool(true);
+            }
         }
-        if (ref) {
-            writer.WriteBool(true);
-        }
+
         stream << HproseTags::TagEnd;
     }
 
