@@ -206,7 +206,7 @@ private:
         HproseWriter writer(stream);
         stream << HproseTags::TagCall;
         writer.WriteString(name, false);
-        if (!args.empty()) {
+        if (ArraySize > 0) {
             writer.WriteList(args, false);
             if (ref) {
                 writer.WriteBool(true);
