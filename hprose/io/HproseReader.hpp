@@ -412,6 +412,7 @@ private:
             case HproseTags::TagNaN: return std::numeric_limits<double>::quiet_NaN();
             case HproseTags::TagInfinity: return ReadInfinityWithoutTag();
             case HproseTags::TagNull: return Any();
+            case HproseTags::TagEmpty: return std::string();
             case HproseTags::TagTrue: return true;
             case HproseTags::TagFalse: return false;
             case HproseTags::TagDate: return ReadDateWithoutTag();
